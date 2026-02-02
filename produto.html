@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Comprar</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+<style>
+body{
+  background:#0f0f14;
+  color:#fff;
+  font-family:Arial;
+  padding:20px
+}
+
+.produto{
+  max-width:1000px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:30px
+}
+
+.thumbs{
+  display:flex;
+  gap:10px;
+  margin-top:10px
+}
+
+.thumbs img{
+  width:70px;
+  cursor:pointer;
+  border-radius:8px;
+  border:2px solid #333;
+  transition:0.3s
+}
+
+.thumbs img:hover{
+  border-color:#a4752c;
+  transform:scale(1.05)
+}
+
+/* ===== SELECT MELHORADO ===== */
+select{
+  background:#15161c;
+  border:2px solid #a4752c;
+  border-radius:14px;
+  color:#fff;
+  padding:12px;
+  margin-top:15px;
+  width:200px;
+  height:52px;
+  cursor:pointer;
+  outline:none;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg fill='white' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.5 7l4.5 4.5L14.5 7'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  background-size:16px;
+}
+
+select:focus{
+  box-shadow:0 0 0 2px rgba(164,117,44,0.4);
+}
+
+/* ===== BOTÃO WHATSAPP ===== */
+button{
+  background:#15161c;
+  color:#fff;
+  border:2px solid #a4752c;
+  border-radius:14px;
+  cursor:pointer;
+  width:200px;
+  height:52px;
+  font-size:15px;
+  font-weight:600;
+  margin-top:20px;
+  transition:0.25s;
+}
+
+button:hover{
+  background:#1b1c24;
+  transform:translateY(-2px);
+}
+
+button:active{
+  transform:scale(0.97);
+}
+</style>
+</head>
+
+<body>
+
+<a href="index.html">
+  <img 
+    src="imagens/arrow.png"
+    style="width:36px;margin-bottom:20px;transition:0.3s;cursor:pointer;"
+    onmouseover="this.style.transform='translateX(-6px)';this.style.opacity='0.7'"
+    onmouseout="this.style.transform='translateX(0)';this.style.opacity='1'"
+    onmousedown="this.style.transform='translateX(-10px) scale(0.95)'"
+    onmouseup="this.style.transform='translateX(-6px)'"
+  >
+</a>
+
+<div id="produto"></div>
+
+<script>
+const id = new URLSearchParams(location.search).get("id");
+const WHATSAPP = "558699554057";
+
+Papa.parse("planilha.csv",{
+  download:true,
+  header:true,
+  complete:r=>{
+    const p = r.data[id];
+    if(!p) return;
+
+    const imgs = [p.Img1,p.Img2,p.Img3,p.Img4].filter(i=>i);
+
+    let precoHTML = "";
+    let precoWhats = `R$ ${p.Preço}`;
+
+    if(p.Promoção === "Sim" && p.PreçoPromo){
+      precoHTML = `
+        <div style="margin:10px 0;">
+          <span style="text-decoration:line-through;color:#777;font-size:14px;">
+            R$ ${p.Preço}
+          </span>
+          <strong style="font-size:26px;color:#a4752c;display:block;">
+            R$ ${p.PreçoPromo}
+          </strong>
+        </div>
+      `;
+      precoWhats = `R$ ${p.PreçoPromo}`;
+    } else {
+      precoHTML = `
+        <strong style="font-size:24px;margin:10px 0;display:block;">
+          R$ ${p.Preço}
+        </strong>
+      `;
+    }
+
+    document.getElementById("produto").innerHTML = `
+      <div class="produto">
+        <div>
+          <img 
+            id="mainImg"
+            src="${imgs[0]}"
+            style="width:100%;max-width:620px;border-radius:12px;"
+          >
+          <div class="thumbs">
+            ${imgs.map(i=>`<img src="${i}" onclick="mainImg.src='${i}'">`).join("")}
+          </div>
+        </div>
+
+        <div>
+          <h1>${p.Nome}</h1>
+          <p style="color:#aaa;margin-top:-15px;">${p.Time}</p>
+
+          <textarea readonly rows="4" style="
+            width:100%;
+            background:none;
+            border:none;
+            color:#fff;
+            resize:none;
+            line-height:1.6;
+          ">${p.Descrição}</textarea>
+
+          ${precoHTML}
+
+          <select id="tamanho">
+            <option>P</option>
+            <option>M</option>
+            <option>G</option>
+          </select>
+
+          <button onclick="comprar()">Comprar no WhatsApp</button>
+        </div>
+      </div>
+    `;
+
+    window.comprar = ()=>{
+      const t = document.getElementById("tamanho").value;
+      const msg = encodeURIComponent(
+        `Olá! Quero comprar:\n${p.Nome}\nTamanho: ${t}\nPreço: ${precoWhats}`
+      );
+      window.open(`https://wa.me/${WHATSAPP}?text=${msg}`);
+    }
+  }
+});
+</script>
+
+</body>
+</html>
